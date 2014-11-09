@@ -1,20 +1,27 @@
-[![GoDoc](https://godoc.org/github.com/go-stack/stack
-?status.svg)](https://godoc.org/github.com/go-stack/stack
+[![GoDoc](https://godoc.org/gopkg.in/stack.v1
+?status.svg)](https://godoc.org/gopkg.in/stack.v1
 ) [![Build Status](https://travis-ci.org/go-stack/stack.svg?branch=master)](https://travis-ci.org/go-stack/stack)
 
 # stack
 
-Package stack implements utilities to capture, manipulate, and format call stacks. It provides a simpler API than package runtime.
+Package stack implements utilities to capture, manipulate, and format call
+stacks. It provides a simpler API than package runtime.
 
-The implementation takes care of the minutia and special cases of interpreting the program counter (pc) values returned by runtime.Callers.
+The implementation takes care of the minutia and special cases of interpreting
+the program counter (pc) values returned by runtime.Callers.
 
 ## Versioning
-Package stack publishes stable APIs via gopkg.in. The most recent is v0 (the API is still baking, please file an issue if you have any suggestions), which is imported like so:
 
-    import "gopkg.in/stack.v0"
+Package stack publishes stable APIs via gopkg.in. The most recent is v1, which
+is imported like so:
+
+    import "gopkg.in/stack.v1"
 
 ## Formatting
-Package stack's types implement fmt.Formatter, which provides a simple and flexible way to declaratively configure formatting when used with logging or error tracking packages.
+
+Package stack's types implement fmt.Formatter, which provides a simple and
+flexible way to declaratively configure formatting when used with logging or
+error tracking packages.
 
 ```go
 func DoTheThing() {

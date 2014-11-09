@@ -8,10 +8,10 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/go-stack/stack"
+	"gopkg.in/stack.v1"
 )
 
-const importPath = "github.com/go-stack/stack"
+const importPath = "gopkg.in/stack.v1"
 
 type testType struct{}
 
