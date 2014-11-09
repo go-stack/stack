@@ -5,7 +5,7 @@ package stack_test
 import (
 	"fmt"
 
-	"gopkg.in/stack.v0"
+	"gopkg.in/stack.v1"
 )
 
 func Example_callFormat() {
