@@ -40,6 +40,7 @@ func (fh *fholder) labyrinth() CallStack {
 	for {
 		return fh.f()
 	}
+	panic("this line only needed for go 1.0")
 }
 
 func TestTrace(t *testing.T) {
