@@ -191,7 +191,7 @@ func (cs CallStack) MarshalText() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// Format implements fmt.Formatter by printing the CallStack as square brackes
+// Format implements fmt.Formatter by printing the CallStack as square brackets
 // ([, ]) surrounding a space separated list of Calls each formatted with the
 // supplied verb and options.
 func (cs CallStack) Format(s fmt.State, verb rune) {
@@ -307,7 +307,7 @@ func pkgIndex(file, funcName string) int {
 			break
 		}
 	}
-	// get back to 0 or trim the leading seperator
+	// get back to 0 or trim the leading separator
 	return i + len(sep)
 }
 
