@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"runtime"
 	"strconv"
 	"strings"
@@ -325,6 +326,7 @@ func init() {
 	if runtime.GOOS == "windows" {
 		runtimePath = strings.ToLower(runtimePath)
 	}
+	runtimePath = path.Join(runtimePath, "/")
 }
 
 func inGoroot(c Call) bool {
