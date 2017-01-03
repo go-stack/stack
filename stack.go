@@ -314,12 +314,6 @@ func pkgIndex(file, funcName string) int {
 
 var runtimePath string
 
-// In order to test TrimRuntime, we would like to
-// emulate setting the runtimePath
-func TestSetRuntimePath(runtime string) {
-	runtimePath = runtime
-}
-
 func init() {
 	var pcs [1]uintptr
 	runtime.Callers(0, pcs[:])
