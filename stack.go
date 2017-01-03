@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"runtime"
 	"strconv"
 	"strings"
@@ -313,6 +314,12 @@ func pkgIndex(file, funcName string) int {
 
 var runtimePath string
 
+// In order to test TrimRuntime, we would like to
+// emulate setting the runtimePath
+func TestSetRuntimePath(runtime string) {
+	runtimePath = runtime
+}
+
 func init() {
 	var pcs [1]uintptr
 	runtime.Callers(0, pcs[:])
@@ -325,6 +332,7 @@ func init() {
 	if runtime.GOOS == "windows" {
 		runtimePath = strings.ToLower(runtimePath)
 	}
+	runtimePath = path.Join(runtimePath, "/")
 }
 
 func inGoroot(c Call) bool {
