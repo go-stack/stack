@@ -13,7 +13,7 @@ the program counter (pc) values returned by runtime.Callers.
 
 ## Versioning
 
-Package stack publishes releases via [semver](http://semver.org/) compatible Git
+Package stack publishes releases via [semver](http://semver.org/) Git
 tags prefixed with a single 'v'. The master branch always contains the latest
 release. The develop branch contains unreleased commits.
 
