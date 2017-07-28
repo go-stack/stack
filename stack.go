@@ -233,12 +233,31 @@ func (cs CallStack) MarshalText() ([]byte, error) {
 // supplied verb and options.
 func (cs CallStack) Format(s fmt.State, verb rune) {
 	s.Write(openBracketBytes)
-	for i, pc := range cs {
-		if i > 0 {
+
+	var pcs []uintptr
+	for _, c := range cs {
+		pcs = append(pcs, c.pcs[:]...)
+	}
+
+	frames := runtime.CallersFrames(pcs[:])
+
+	initial := true
+	for frame, more := frames.Next(); more; frame, more = frames.Next() {
+		if !initial {
 			s.Write(spaceBytes)
 		}
-		pc.Format(s, verb)
+
+		next, _ := frames.Next()
+		if frame.Function == "runtime.sigpanic" {
+			frame, _ = runtime.CallersFrames([]uintptr{next.PC - 1}).Next()
+		} else {
+			frame = next
+		}
+
+		format(&frame, s, verb)
+		initial = false
 	}
+
 	s.Write(closeBracketBytes)
 }
 
