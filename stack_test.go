@@ -224,6 +224,8 @@ func TestTrimRuntime(t *testing.T) {
 	}
 }
 
+
+
 func BenchmarkCallVFmt(b *testing.B) {
 	c := stack.Caller(0)
 	b.ResetTimer()

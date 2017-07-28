@@ -21,8 +21,7 @@ import (
 
 // Call records a single function invocation from a goroutine stack.
 type Call struct {
-	fn *runtime.Func
-	pc uintptr
+	pcs [2]uintptr
 }
 
 // Caller returns a Call from the stack of the current goroutine. The argument
@@ -33,16 +32,11 @@ func Caller(skip int) Call {
 	n := runtime.Callers(skip+1, pcs[:])
 
 	var c Call
-
 	if n < 2 {
 		return c
 	}
 
-	c.pc = pcs[1]
-	if runtime.FuncForPC(pcs[0]).Name() != "runtime.sigpanic" {
-		c.pc--
-	}
-	c.fn = runtime.FuncForPC(c.pc)
+	c.pcs = pcs
 	return c
 }
 
@@ -54,9 +48,10 @@ func (c Call) String() string {
 // MarshalText implements encoding.TextMarshaler. It formats the Call the same
 // as fmt.Sprintf("%v", c).
 func (c Call) MarshalText() ([]byte, error) {
-	if c.fn == nil {
+	if c.pcs[0] == 0 {
 		return nil, ErrNoFunc
 	}
+
 	buf := bytes.Buffer{}
 	fmt.Fprint(&buf, c)
 	return buf.Bytes(), nil
@@ -83,19 +78,31 @@ var ErrNoFunc = errors.New("no call stack information")
 //    %+v   equivalent to %+s:%d
 //    %#v   equivalent to %#s:%d
 func (c Call) Format(s fmt.State, verb rune) {
-	if c.fn == nil {
+	frames := runtime.CallersFrames(c.pcs[:])
+	head , _ := frames.Next()
+	frame, _ := frames.Next()
+
+	if head.Function == "runtime.signpanic" {
+		frame, _ = frames.Next()
+	}
+
+	format(&frame, s, verb)
+}
+
+func format(frame *runtime.Frame, s fmt.State, verb rune) {
+	if frame.Func == nil {
 		fmt.Fprintf(s, "%%!%c(NOFUNC)", verb)
 		return
 	}
 
 	switch verb {
 	case 's', 'v':
-		file, line := c.fn.FileLine(c.pc)
+		file, line := frame.File, frame.Line
 		switch {
 		case s.Flag('#'):
 			// done
 		case s.Flag('+'):
-			file = file[pkgIndex(file, c.fn.Name()):]
+			file = file[pkgIndex(file, frame.Function):]
 		default:
 			const sep = "/"
 			if i := strings.LastIndex(file, sep); i != -1 {
@@ -109,12 +116,12 @@ func (c Call) Format(s fmt.State, verb rune) {
 		}
 
 	case 'd':
-		_, line := c.fn.FileLine(c.pc)
+		line := frame.Line
 		buf := [6]byte{}
 		s.Write(strconv.AppendInt(buf[:0], int64(line), 10))
 
 	case 'k':
-		name := c.fn.Name()
+		name := frame.Function
 		const pathSep = "/"
 		start, end := 0, len(name)
 		if i := strings.LastIndex(name, pathSep); i != -1 {
@@ -130,7 +137,7 @@ func (c Call) Format(s fmt.State, verb rune) {
 		io.WriteString(s, name[start:end])
 
 	case 'n':
-		name := c.fn.Name()
+		name := frame.Function
 		if !s.Flag('+') {
 			const pathSep = "/"
 			if i := strings.LastIndex(name, pathSep); i != -1 {
@@ -148,32 +155,47 @@ func (c Call) Format(s fmt.State, verb rune) {
 // PC returns the program counter for this call frame; multiple frames may
 // have the same PC value.
 func (c Call) PC() uintptr {
-	return c.pc
+	return c.pcs[1]
+}
+
+func (c Call) frame() (*runtime.Frame) {
+	frames := runtime.CallersFrames(c.pcs[:])
+
+	frame, _ := frames.Next()
+	next, _ := frames.Next()
+	if frame.Function == "runtime.sigpanic" {
+		frame, _ = runtime.CallersFrames([]uintptr{next.PC - 1}).Next()
+	} else {
+		frame = next
+	}
+
+	return &frame
 }
 
 // name returns the import path qualified name of the function containing the
 // call.
 func (c Call) name() string {
-	if c.fn == nil {
+	frame := c.frame()
+	if frame.Func == nil {
 		return "???"
 	}
-	return c.fn.Name()
+	return frame.Function
 }
 
 func (c Call) file() string {
-	if c.fn == nil {
+	frame := c.frame()
+	if frame.Func == nil {
 		return "???"
 	}
-	file, _ := c.fn.FileLine(c.pc)
-	return file
+	return frame.File
 }
 
 func (c Call) line() int {
-	if c.fn == nil {
+	frame := c.frame()
+	if frame.Func == nil {
 		return 0
 	}
-	_, line := c.fn.FileLine(c.pc)
-	return line
+	return frame.Line
 }
 
 // CallStack records a sequence of function invocations from a goroutine
@@ -197,9 +219,6 @@ func (cs CallStack) MarshalText() ([]byte, error) {
 	buf := bytes.Buffer{}
 	buf.Write(openBracketBytes)
 	for i, pc := range cs {
-		if pc.fn == nil {
-			return nil, ErrNoFunc
-		}
 		if i > 0 {
 			buf.Write(spaceBytes)
 		}
@@ -214,12 +233,31 @@ func (cs CallStack) MarshalText() ([]byte, error) {
 // supplied verb and options.
 func (cs CallStack) Format(s fmt.State, verb rune) {
 	s.Write(openBracketBytes)
-	for i, pc := range cs {
-		if i > 0 {
+
+	var pcs []uintptr
+	for _, c := range cs {
+		pcs = append(pcs, c.pcs[:]...)
+	}
+
+	frames := runtime.CallersFrames(pcs[:])
+
+	initial := true
+	for frame, more := frames.Next(); more; frame, more = frames.Next() {
+		if !initial {
 			s.Write(spaceBytes)
 		}
-		pc.Format(s, verb)
+
+		next, _ := frames.Next()
+		if frame.Function == "runtime.sigpanic" {
+			frame, _ = runtime.CallersFrames([]uintptr{next.PC - 1}).Next()
+		} else {
+			frame = next
+		}
+
+		format(&frame, s, verb)
+		initial = false
 	}
+
 	s.Write(closeBracketBytes)
 }
 
@@ -227,17 +265,12 @@ func (cs CallStack) Format(s fmt.State, verb rune) {
 // identifying the calling function.
 func Trace() CallStack {
 	var pcs [512]uintptr
-	n := runtime.Callers(2, pcs[:])
+	n := runtime.Callers(1, pcs[:])
 	cs := make([]Call, n)
 
-	for i, pc := range pcs[:n] {
-		pcFix := pc
-		if i > 0 && cs[i-1].fn.Name() != "runtime.sigpanic" {
-			pcFix--
-		}
-		cs[i] = Call{
-			fn: runtime.FuncForPC(pcFix),
-			pc: pcFix,
+	for i := range pcs[:n] {
+		cs[i] = Call {
+			pcs: [2]uintptr{pcs[i], pcs[i + 1]},
 		}
 	}
 
@@ -247,7 +280,7 @@ func Trace() CallStack {
 // TrimBelow returns a slice of the CallStack with all entries below c
 // removed.
 func (cs CallStack) TrimBelow(c Call) CallStack {
-	for len(cs) > 0 && cs[0].pc != c.pc {
+	for len(cs) > 0 && cs[0].pcs[1] != c.pcs[1] {
 		cs = cs[1:]
 	}
 	return cs
@@ -256,7 +289,7 @@ func (cs CallStack) TrimBelow(c Call) CallStack {
 // TrimAbove returns a slice of the CallStack with all entries above c
 // removed.
 func (cs CallStack) TrimAbove(c Call) CallStack {
-	for len(cs) > 0 && cs[len(cs)-1].pc != c.pc {
+	for len(cs) > 0 && cs[len(cs)-1].pcs[1] != c.pcs[1] {
 		cs = cs[:len(cs)-1]
 	}
 	return cs
