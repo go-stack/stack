@@ -224,17 +224,7 @@ func TestTrimRuntime(t *testing.T) {
 	}
 }
 
-func TestPanic(t *testing.T) {
-	defer func() {
-		if recover() != nil {
-			trace := stack.Trace().TrimRuntime()
-			fmt.Println(trace)
-		}
-	}()
 
-	var x *uintptr
-	_ = *x
-}
 
 func BenchmarkCallVFmt(b *testing.B) {
 	c := stack.Caller(0)
