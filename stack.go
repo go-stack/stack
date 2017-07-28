@@ -159,14 +159,14 @@ func (c Call) PC() uintptr {
 }
 
 func (c Call) frame() (*runtime.Frame) {
-	window := append(c.pcs[:], c.pcs[1] - 1)
-	frames := runtime.CallersFrames(window)
+	frames := runtime.CallersFrames(c.pcs[:])
 
-	head, _ := frames.Next()
 	frame, _ := frames.Next()
-
-	if head.Function == "runtime.sigpanic" {
-		frame, _ = frames.Next()
+	next, _ := frames.Next()
+	if frame.Function == "runtime.sigpanic" {
+		frame, _ = runtime.CallersFrames([]uintptr{next.PC - 1}).Next()
+	} else {
+		frame = next
 	}
 
 	return &frame
