@@ -79,7 +79,7 @@ var ErrNoFunc = errors.New("no call stack information")
 //    %#v   equivalent to %#s:%d
 func (c Call) Format(s fmt.State, verb rune) {
 	frames := runtime.CallersFrames(c.pcs[:])
-	head , _ := frames.Next()
+	head, _ := frames.Next()
 	frame, _ := frames.Next()
 
 	if head.Function == "runtime.signpanic" {
@@ -158,17 +158,10 @@ func (c Call) PC() uintptr {
 	return c.pcs[1]
 }
 
-func (c Call) frame() (*runtime.Frame) {
+func (c Call) frame() *runtime.Frame {
 	frames := runtime.CallersFrames(c.pcs[:])
-
 	frame, _ := frames.Next()
-	next, _ := frames.Next()
-	if frame.Function == "runtime.sigpanic" {
-		frame, _ = runtime.CallersFrames([]uintptr{next.PC - 1}).Next()
-	} else {
-		frame = next
-	}
-
+	frame, _ = frames.Next()
 	return &frame
 }
 
@@ -269,8 +262,8 @@ func Trace() CallStack {
 	cs := make([]Call, n)
 
 	for i := range pcs[:n] {
-		cs[i] = Call {
-			pcs: [2]uintptr{pcs[i], pcs[i + 1]},
+		cs[i] = Call{
+			pcs: [2]uintptr{pcs[i], pcs[i+1]},
 		}
 	}
 
