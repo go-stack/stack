@@ -17,9 +17,9 @@ const importPath = "github.com/go-stack/stack"
 
 type testType struct{}
 
-func (tt testType) testMethod() (c stack.Call, pc uintptr, file string, line int, ok bool) {
+func (tt testType) testMethod() (c stack.Call, file string, line int, ok bool) {
 	c = stack.Caller(0)
-	pc, file, line, ok = runtime.Caller(0)
+	_, file, line, ok = runtime.Caller(0)
 	line--
 	return
 }
@@ -28,14 +28,14 @@ func TestCallFormat(t *testing.T) {
 	t.Parallel()
 
 	c := stack.Caller(0)
-	pc, file, line, ok := runtime.Caller(0)
+	_, file, line, ok := runtime.Caller(0)
 	line--
 	if !ok {
 		t.Fatal("runtime.Caller(0) failed")
 	}
 	relFile := path.Join(importPath, filepath.Base(file))
 
-	c2, pc2, file2, line2, ok2 := testType{}.testMethod()
+	c2, file2, line2, ok2 := testType{}.testMethod()
 	if !ok2 {
 		t.Fatal("runtime.Caller(0) failed")
 	}
@@ -54,7 +54,7 @@ func TestCallFormat(t *testing.T) {
 		{c, "func", "%#s", file},
 		{c, "func", "%d", fmt.Sprint(line)},
 		{c, "func", "%n", "TestCallFormat"},
-		{c, "func", "%+n", runtime.FuncForPC(pc - 1).Name()},
+		{c, "func", "%+n", "github.com/go-stack/stack_test.TestCallFormat"},
 		{c, "func", "%k", "stack_test"},
 		{c, "func", "%+k", "github.com/go-stack/stack_test"},
 		{c, "func", "%v", fmt.Sprint(path.Base(file), ":", line)},
@@ -66,7 +66,7 @@ func TestCallFormat(t *testing.T) {
 		{c2, "meth", "%#s", file2},
 		{c2, "meth", "%d", fmt.Sprint(line2)},
 		{c2, "meth", "%n", "testType.testMethod"},
-		{c2, "meth", "%+n", runtime.FuncForPC(pc2).Name()},
+		{c2, "meth", "%+n", "github.com/go-stack/stack_test.testType.testMethod"},
 		{c2, "meth", "%k", "stack_test"},
 		{c2, "meth", "%+k", "github.com/go-stack/stack_test"},
 		{c2, "meth", "%v", fmt.Sprint(path.Base(file2), ":", line2)},
@@ -92,7 +92,7 @@ func TestCallString(t *testing.T) {
 		t.Fatal("runtime.Caller(0) failed")
 	}
 
-	c2, _, file2, line2, ok2 := testType{}.testMethod()
+	c2, file2, line2, ok2 := testType{}.testMethod()
 	if !ok2 {
 		t.Fatal("runtime.Caller(0) failed")
 	}
@@ -125,7 +125,7 @@ func TestCallMarshalText(t *testing.T) {
 		t.Fatal("runtime.Caller(0) failed")
 	}
 
-	c2, _, file2, line2, ok2 := testType{}.testMethod()
+	c2, file2, line2, ok2 := testType{}.testMethod()
 	if !ok2 {
 		t.Fatal("runtime.Caller(0) failed")
 	}
@@ -191,7 +191,7 @@ func getTrace(t *testing.T) (stack.CallStack, int) {
 func TestTrimAbove(t *testing.T) {
 	trace := trimAbove()
 	if got, want := len(trace), 2; got != want {
-		t.Errorf("got len(trace) == %v, want %v, trace: %n", got, want, trace)
+		t.Fatalf("got len(trace) == %v, want %v, trace: %n", got, want, trace)
 	}
 	if got, want := fmt.Sprintf("%n", trace[1]), "TestTrimAbove"; got != want {
 		t.Errorf("got %q, want %q", got, want)
@@ -223,8 +223,6 @@ func TestTrimRuntime(t *testing.T) {
 		t.Errorf("got len(trace) == %v, want %v, goroot: %q, trace: %#v", got, want, runtime.GOROOT(), trace)
 	}
 }
-
-
 
 func BenchmarkCallVFmt(b *testing.B) {
 	c := stack.Caller(0)
