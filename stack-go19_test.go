@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/go-stack/stack"
+	"github.com/eluv-io/stack"
 )
 
 func TestCallerInlinedPanic(t *testing.T) {

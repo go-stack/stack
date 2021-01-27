@@ -5,7 +5,7 @@ package stack_test
 import (
 	"fmt"
 
-	"github.com/go-stack/stack"
+	"github.com/eluv-io/stack"
 )
 
 func Example_callFormat() {

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/go-stack/stack"
+	"github.com/eluv-io/stack"
 )
 
 func TestCaller(t *testing.T) {
