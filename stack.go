@@ -208,14 +208,24 @@ func (cs CallStack) Format(s fmt.State, verb rune) {
 	s.Write(closeBracketBytes)
 }
 
+// Convenience wrapper around runtime.Callers()
+func Callers(skip int) []uintptr {
+	var pcs [512]uintptr
+	n := runtime.Callers(skip+1, pcs[:])
+	return pcs[:n]
+}
+
 // Trace returns a CallStack for the current goroutine with element 0
 // identifying the calling function.
 func Trace() CallStack {
-	var pcs [512]uintptr
-	n := runtime.Callers(1, pcs[:])
+	return TraceFrom(Callers(1))
+}
 
-	frames := runtime.CallersFrames(pcs[:n])
-	cs := make(CallStack, 0, n)
+// TraceFrom creates a CallStack from the given program counters (as generated
+// by runtime.Callers)
+func TraceFrom(pcs []uintptr) CallStack {
+	frames := runtime.CallersFrames(pcs)
+	cs := make(CallStack, 0, len(pcs))
 
 	// Skip extra frame retrieved just to make sure the runtime.sigpanic
 	// special case is handled.

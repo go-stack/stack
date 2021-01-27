@@ -497,6 +497,14 @@ func deepStack(depth int, b *testing.B) stack.CallStack {
 	return s
 }
 
+func deepCallers(depth int, b *testing.B) []uintptr {
+	if depth > 0 {
+		return deepCallers(depth-1, b)
+	}
+	b.StartTimer()
+	return stack.Callers(1)
+}
+
 func BenchmarkTrace10(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
@@ -515,6 +523,33 @@ func BenchmarkTrace100(b *testing.B) {
 	b.StopTimer()
 	for i := 0; i < b.N; i++ {
 		deepStack(100, b)
+	}
+}
+
+func BenchmarkCallers(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		stack.Callers(1)
+	}
+}
+
+func BenchmarkCallers10(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		deepCallers(10, b)
+	}
+}
+
+func BenchmarkCallers50(b *testing.B) {
+	b.StopTimer()
+	for i := 0; i < b.N; i++ {
+		deepCallers(50, b)
+	}
+}
+
+func BenchmarkCallers100(b *testing.B) {
+	b.StopTimer()
+	for i := 0; i < b.N; i++ {
+		deepCallers(100, b)
 	}
 }
 
