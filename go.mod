@@ -1,1 +1,1 @@
-module github.com/go-stack/stack
+module github.com/eluv-io/stack
