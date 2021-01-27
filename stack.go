@@ -211,14 +211,14 @@ func (cs CallStack) Format(s fmt.State, verb rune) {
 // Convenience wrapper around runtime.Callers()
 func Callers(skip int) []uintptr {
 	var pcs [512]uintptr
-	n := runtime.Callers(skip, pcs[:])
+	n := runtime.Callers(skip+1, pcs[:])
 	return pcs[:n]
 }
 
 // Trace returns a CallStack for the current goroutine with element 0
 // identifying the calling function.
 func Trace() CallStack {
-	return TraceFrom(Callers(2))
+	return TraceFrom(Callers(1))
 }
 
 // TraceFrom creates a CallStack from the given program counters (as generated
