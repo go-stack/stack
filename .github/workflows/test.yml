@@ -84,4 +84,5 @@ jobs:
         env:
           GOPATH: "${{github.workspace}}"
           GOFLAGS: ${{ matrix.go-flags }}
+        working-directory: "${{github.workspace}}/src/github.com/${{github.repository}}"
         run: go test ./...
