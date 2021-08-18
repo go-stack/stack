@@ -20,6 +20,8 @@ jobs:
           - 1.13.x
           - 1.14.x
           - 1.15.x
+          - 1.16.x
+          - 1.17.x
         go-flags: [""]
         os: [ubuntu-latest, macos-latest, windows-latest]
         include:
@@ -50,6 +52,24 @@ jobs:
           - go-version: 1.15.x
             os: windows-latest
             go-flags: "-trimpath"
+          - go-version: 1.16.x
+            os: ubuntu-latest
+            go-flags: "-trimpath"
+          - go-version: 1.16.x
+            os: macos-latest
+            go-flags: "-trimpath"
+          - go-version: 1.16.x
+            os: windows-latest
+            go-flags: "-trimpath"
+          - go-version: 1.17.x
+            os: ubuntu-latest
+            go-flags: "-trimpath"
+          - go-version: 1.17.x
+            os: macos-latest
+            go-flags: "-trimpath"
+          - go-version: 1.17.x
+            os: windows-latest
+            go-flags: "-trimpath"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install Go
@@ -64,4 +84,5 @@ jobs:
         env:
           GOPATH: "${{github.workspace}}"
           GOFLAGS: ${{ matrix.go-flags }}
+        working-directory: "${{github.workspace}}/src/github.com/${{github.repository}}"
         run: go test ./...
