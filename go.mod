@@ -1,3 +1,3 @@
 module github.com/go-stack/stack
 
-go 1.13
+go 1.17
